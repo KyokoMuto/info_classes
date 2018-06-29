@@ -72,13 +72,13 @@ def annealingoptimize(cities, distGreedy, T=100000, cool=0.9999): # hill climb(?
             choicedCombi = random.sample(citiesNumberIndex, 1)
             index0 = choicedCombi[0]
             if index0 >= citiesNumber//4 and index0 < citiesNumber-citiesNumber//4:
-                indexs = range(index0-citiesNumber//4, index0+citiesNumber//4)
+                indexs = list(range(index0-citiesNumber//4, index0+citiesNumber//4))
             elif index0 < citiesNumber//4:
-                indexs = range(index0+1, index0+1+citiesNumber//2)
+                indexs = list(range(0,index0+citiesNumber//4))+list(range(index0-citiesNumber//4+citiesNumber+1,citiesNumber))
             else:
-                indexs = range(index0-citiesNumber//2, index0)
+                indexs = list(range(index0-citiesNumber//4+1,citiesNumber))+list(range(0,index0+citiesNumber//4-citiesNumber))
             index1 = random.sample(indexs, 1)
-
+            
             # 同じ2点を選んでしまった場合はやり直す
             if index0 != index1[0]:
                 # 選ばれた2点を交換
@@ -232,24 +232,10 @@ if __name__ == '__main__':
 
 #-----------------↓コメント-------------------
 
-#よくわからない....
-#なんか16以上がかなり重くなる...
-#何回か実行すると割と良さげな値が出る(?)
-#多分、greedyよりよくなかったらやり直すってとこが重そう
-#月以降、あんまり時間取れないからあげちゃった
-#勝手にやってごめん...
-#何なら無視しちゃって大丈夫だよー！！！
+#inoYaki2からの変更点は焼きなましの一点選んだ後のランダムな一点を選ぶ範囲の所
+#前にcitiesNumber//4 、後ろにcitiesNumber//4 の範囲から選ぶようにした！
+#その最初の一点が経路の中でどのような場所にあったとしても
 
 #-----------------↑コメント-------------------
 
-#------------------↓問題点----------------------
 
-#初期値も毎回の山登りのためにランダムに更新しているけど、その意味あるのかわからない
-#Tの値はもっと大きい方がいいのか、小さい方がいいのかわからない
-#コードに無駄があると思われる
-#＊hill climbの現状
-#何回か "$ python inoYaki.py input_n.csv" を実行しないと、最短?(sample/saのoutput)が得られない(n=0,1,2)
-#何回か $ python inoYaki.py input_n.csv" を実行しても、最短?(sample/saのoutput)が得られない(n=3)
-# "$ python inoYaki.py input_n.csv" を実行すると謎のエラーが出る(n>=4)
-
-#------------------↑問題点----------------------
