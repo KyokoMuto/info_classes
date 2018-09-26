@@ -23,8 +23,7 @@ double FindOutPutPercentage(char alpha,int state){
     return 0;
 }
 
-
-void SetInitialState(string model){
+void SetInitialForViterbi(string model){
     hidenn_state_candidates_.clear();
     hidenn_state_percentages_.clear();
     vector<double> first_state_transition_matrix=*state_transition_matrix.begin();
@@ -32,21 +31,21 @@ void SetInitialState(string model){
             vector<double> hidenn_state_percentages_line_;
             vector<int> hidenn_state_candidates_line_;
             hidenn_state_candidates_line_.push_back(0);
-            double init_num=FindOutPutPercentage(model[0],i)*first_state_transition_matrix.at(i+1);
-            hidenn_state_percentages_line_.push_back(init_num);
+            double init =log(FindOutPutPercentage(model[0],i))+log(first_state_transition_matrix.at(i+1));
+            hidenn_state_percentages_line_.push_back(init);
             hidenn_state_percentages_.push_back(hidenn_state_percentages_line_);
             hidenn_state_candidates_.push_back(hidenn_state_candidates_line_);
         }
 }
 
-void SetNotInitialState(string model){
+void CalculateAllStatesInViterbi(string model){
     for (int model_number=1;model_number<model.size();model_number++){
         for (int after=1;after<state_size;after++) {
             int hidenn_state_max_candidate_=0;
-            double hidenn_state_max_percentage_=0;
+            double hidenn_state_max_percentage_=-10000;
             for(int before=1;before<state_size;before++) {
                 double state_percentage=
-                hidenn_state_percentages_.at(before-1).at(model_number-1)*state_transition_matrix.at(before).at(after)*FindOutPutPercentage(model[model_number],after-1);
+                hidenn_state_percentages_.at(before-1).at(model_number-1)+log(state_transition_matrix.at(before).at(after))+log(FindOutPutPercentage(model[model_number],after-1));
                 if(hidenn_state_max_percentage_<state_percentage){
                     hidenn_state_max_percentage_=state_percentage;
                     hidenn_state_max_candidate_=before;
@@ -58,9 +57,9 @@ void SetNotInitialState(string model){
     }
 }
 
-void OutputHiddenState(string model){
+void OutputHiddenStateForViterbi(string model){
     vector<int> hidden_state_;
-    double hidden_state_max_percentage_=0;
+    double hidden_state_max_percentage_=-10000;
     int hidden_state_max_candidate_=0;
     for(int i=1;i<state_size;i++){
         double hidden_state_max_percentage_candidate_=hidenn_state_percentages_.at(i-1).back();
@@ -83,7 +82,7 @@ void OutputHiddenState(string model){
     }
 }
 
-void InsertInitialValueInLog(string file){
+void InsertInitialValue(string file){
     ifstream ifs(file);
     if(!ifs.fail()){
         char alpha;
@@ -117,25 +116,24 @@ void InsertInitialValueInLog(string file){
     }
 }
 void TestForStates(){
-    InsertInitialValueInLog("test.fasta");
-    SetInitialState("abba");
+    InsertInitialValue("test.fasta");
+    SetInitialForViterbi("abba");
     for(int i=0;i<state_size-1;i++){
         assert(hidenn_state_candidates_.at(i).at(0)==0);
     }
-    assert(hidenn_state_percentages_.at(0).at(0)==0.2);
-    assert(hidenn_state_percentages_.at(1).at(0)==0);
-    assert(hidenn_state_percentages_.at(2).at(0)==0.06);
-    SetNotInitialState("abba");
-    OutputHiddenState("abba");
+    assert(hidenn_state_percentages_.at(0).at(0)==log(0.2));
+    assert(hidenn_state_percentages_.at(1).at(0)==log(0));
+    assert(hidenn_state_percentages_.at(2).at(0)==log(0.06));
+    CalculateAllStatesInViterbi("abba");
+    OutputHiddenStateForViterbi("abba");
     
 }
 
 int main(void){
     //TestForStates();
-    string model="gagaguccuauacaaacuccaaaacacugagaccauacaaguaaaaccagucgagaaaauagucaacagcacccccguugcguauccugcggagaaugccucgcuaucuguccucacgauuggucuaaccgcucggcucaggcgugugggccugaaauccgggcagcaaacuacgguaaguuuucgcguaucaaaaauacauugaugaauguucgcuauuagccgggucgacguuuugauggugacuaggagcgaaagugauuuuuuugugagcggugucauagcaggggaucaucugaggugaacuauggacgggucagucgcccucauuggguuuguuacucagauacgugacacacguaaggucgcacggcaguagugauccacgagaaucggcacucuuacgagcaagucuauagcgacguggcuugcuauuaagacaguaauggacucggacagcua";
-    //guacgcgacuaaucauuuucgcacgccaucacacuuucaacccaggagcuuacaguguuccaggggccaggcuuggggcagccucuguggaagugcgagggcugcgcuaguguacauuagccgacccucagacgugaaauaaagagaugcugcugguugcacagugagcaacguucacucggcaacccgucggauacc ";
-    InsertInitialValueInLog("initial.fasta");
-    SetInitialState(model);
-    SetNotInitialState(model);
-    OutputHiddenState(model);
+    string model="gagaguccuauacaaacuccaaaacacugagaccauacaaguaaaaccagucgagaaaauagucaacagcacccccguugcguauccugcggagaaugccucgcuaucuguccucacgauuggucuaaccgcucggcucaggcgugugggccugaaauccgggcagcaaacuacgguaaguuuucgcguaucaaaaauacauugaugaauguucgcuauuagccgggucgacguuuugauggugacuaggagcgaaagugauuuuuuugugagcggugucauagcaggggaucaucugaggugaacuauggacgggucagucgcccucauuggguuuguuacucagauacgugacacacguaaggucgcacggcaguagugauccacgagaaucggcacucuuacgagcaagucuauagcgacguggcuugcuauuaagacaguaauggacucggacagcuaguacgcgacuaaucauuuucgcacgccaucacacuuucaacccaggagcuuacaguguuccaggggccaggcuuggggcagccucuguggaagugcgagggcugcgcuaguguacauuagccgacccucagacgugaaauaaagagaugcugcugguugcacagugagcaacguucacucggcaacccgucggauacc";
+    InsertInitialValue("initial.fasta");
+    SetInitialForViterbi(model);
+    CalculateAllStatesInViterbi(model);
+    OutputHiddenStateForViterbi(model);
 }
