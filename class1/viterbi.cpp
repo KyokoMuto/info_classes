@@ -4,6 +4,7 @@
 #include <vector>
 #include <cassert>
 #include <assert.h>
+#include <math.h>
 using namespace std;
 int alpha_size_;
 vector<char> alpha_;
@@ -31,7 +32,8 @@ void SetInitialState(string model){
             vector<double> hidenn_state_percentages_line_;
             vector<int> hidenn_state_candidates_line_;
             hidenn_state_candidates_line_.push_back(0);
-            hidenn_state_percentages_line_.push_back(first_state_transition_matrix.at(i+1)*FindOutPutPercentage(model[0],i));
+            double init_num=FindOutPutPercentage(model[0],i)*first_state_transition_matrix.at(i+1);
+            hidenn_state_percentages_line_.push_back(init_num);
             hidenn_state_percentages_.push_back(hidenn_state_percentages_line_);
             hidenn_state_candidates_.push_back(hidenn_state_candidates_line_);
         }
@@ -43,7 +45,6 @@ void SetNotInitialState(string model){
             int hidenn_state_max_candidate_=0;
             double hidenn_state_max_percentage_=0;
             for(int before=1;before<state_size;before++) {
-                
                 double state_percentage=
                 hidenn_state_percentages_.at(before-1).at(model_number-1)*state_transition_matrix.at(before).at(after)*FindOutPutPercentage(model[model_number],after-1);
                 if(hidenn_state_max_percentage_<state_percentage){
@@ -51,7 +52,6 @@ void SetNotInitialState(string model){
                     hidenn_state_max_candidate_=before;
                 }
             }
-            cout<<"ab"<<hidenn_state_max_percentage_<<"fg"<<hidenn_state_max_candidate_<<endl;
             hidenn_state_percentages_.at(after-1).push_back(hidenn_state_max_percentage_);
             hidenn_state_candidates_.at(after-1).push_back(hidenn_state_max_candidate_);
         }
@@ -64,15 +64,12 @@ void OutputHiddenState(string model){
     int hidden_state_max_candidate_=0;
     for(int i=1;i<state_size;i++){
         double hidden_state_max_percentage_candidate_=hidenn_state_percentages_.at(i-1).back();
-        cout<<hidden_state_max_percentage_candidate_;
         if(hidden_state_max_percentage_<hidden_state_max_percentage_candidate_){
             hidden_state_max_percentage_=hidden_state_max_percentage_candidate_;
             hidden_state_max_candidate_=i;
         }
     }
-    //cout<<hidenn_state_max_candidate_.at(i-1).back()<<endl;
     int before_state=hidden_state_max_candidate_;
-    cout<<before_state<<endl;
     hidden_state_.push_back(before_state);
     before_state=hidenn_state_candidates_.at(before_state-1).back();
     hidden_state_.push_back(before_state);
@@ -86,8 +83,7 @@ void OutputHiddenState(string model){
     }
 }
 
-
-void InsertInitialValue(string file){
+void InsertInitialValueInLog(string file){
     ifstream ifs(file);
     if(!ifs.fail()){
         char alpha;
@@ -121,7 +117,7 @@ void InsertInitialValue(string file){
     }
 }
 void TestForStates(){
-    InsertInitialValue("test.fasta");
+    InsertInitialValueInLog("test.fasta");
     SetInitialState("abba");
     for(int i=0;i<state_size-1;i++){
         assert(hidenn_state_candidates_.at(i).at(0)==0);
@@ -134,11 +130,11 @@ void TestForStates(){
     
 }
 
-
 int main(void){
     //TestForStates();
-    string model="gagaguccuauacaaacuccaaaacacugagaccauacaaguacacacguaaggucgcacggcaguagugauccacgagaaucggcacucuuacgagcaagucuauagcgacguggc";
-    InsertInitialValue("initial.fasta");
+    string model="gagaguccuauacaaacuccaaaacacugagaccauacaaguaaaaccagucgagaaaauagucaacagcacccccguugcguauccugcggagaaugccucgcuaucuguccucacgauuggucuaaccgcucggcucaggcgugugggccugaaauccgggcagcaaacuacgguaaguuuucgcguaucaaaaauacauugaugaauguucgcuauuagccgggucgacguuuugauggugacuaggagcgaaagugauuuuuuugugagcggugucauagcaggggaucaucugaggugaacuauggacgggucagucgcccucauuggguuuguuacucagauacgugacacacguaaggucgcacggcaguagugauccacgagaaucggcacucuuacgagcaagucuauagcgacguggcuugcuauuaagacaguaauggacucggacagcua";
+    //guacgcgacuaaucauuuucgcacgccaucacacuuucaacccaggagcuuacaguguuccaggggccaggcuuggggcagccucuguggaagugcgagggcugcgcuaguguacauuagccgacccucagacgugaaauaaagagaugcugcugguugcacagugagcaacguucacucggcaacccgucggauacc ";
+    InsertInitialValueInLog("initial.fasta");
     SetInitialState(model);
     SetNotInitialState(model);
     OutputHiddenState(model);
